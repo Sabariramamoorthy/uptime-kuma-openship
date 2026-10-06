@@ -1,0 +1,28 @@
+# Uptime Kuma (https://github.com/louislam/uptime-kuma) for the CloudShift Openship fleet.
+# Runs on the "Raspbery Pi - Network" server (Pi 3B+, arm64) and monitors every public
+# CloudShift URL, API, TCP endpoint, DNS record and TLS certificate.
+# Single container, SQLite on the /app/data volume. The admin account is created on first run.
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:2.5.5
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-3001}:3001"
+    environment:
+      HOST: 0.0.0.0
+      PORT: "3001"
+      UPTIME_KUMA_HOST: 0.0.0.0
+      UPTIME_KUMA_PORT: "3001"
+      UPTIME_KUMA_DB_TYPE: sqlite
+      TZ: ${TZ:-Asia/Kolkata}
+    volumes:
+      - uptime_kuma_data:/app/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+volumes:
+  uptime_kuma_data:
